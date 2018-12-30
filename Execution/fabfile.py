@@ -107,6 +107,9 @@ def run_protocol(config_file, args, executable_name, working_directory):
                 else:
                     # run external protocols
                     with cd('MATRIX'):
+                        put('InstancesConfigurations/public_ips', run('pwd'))
+                        put('InstancesConfigurations/parties.conf', run('pwd'))
+
                         if 'coordinatorConfig' in data:
                             # run protocols  with coordinator
                             if env.hosts.index(env.host) == 0:
@@ -116,7 +119,11 @@ def run_protocol(config_file, args, executable_name, working_directory):
 
                                 for coordinator_val in coordinator_args:
                                     coordinator_values_str += '%s ' % coordinator_val
+
+                                with warn_only():
                                     sudo("kill -9 `ps aux | grep %s | awk '{print $2}'`" % coordinator_executable)
+                                    put('aws.pem', run('pwd'))
+
                                 run('./%s %s' % (coordinator_executable, coordinator_values_str))
                                 with open('Execution/execution_log.log', 'a+') as log_file:
                                     log_file.write('%s\n' % values_str)
@@ -124,9 +131,6 @@ def run_protocol(config_file, args, executable_name, working_directory):
                                 if len(regions) > 1:
                                     put('InstancesConfigurations/parties%s.conf' % party_id, run('pwd'))
                                     run('mv parties%s.conf parties.conf' % party_id)
-                                else:
-                                    put('InstancesConfigurations/parties.conf', run('pwd'))
-
                                 run('. ./%s %s %s' % (executable_name, party_id - 1, values_str))
                                 with open('Execution/execution_log.log', 'a+') as log_file:
                                     log_file.write('%s\n' % values_str)
